@@ -1,0 +1,14 @@
+# version: '3.8' docker-compose가 V2로 업데이트 되면서 더 이상 버전 명시는 사용되지 않음
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: fastapi_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: password123
+      MYSQL_DATABASE: fastapi_practice
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql_data:/var/lib/mysql

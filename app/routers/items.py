@@ -1,19 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-
 import models
 import schemas
 from database import get_db
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
-router = APIRouter(
-    prefix="/items", tags=["items"]
-)  # Prefix 설정, /items 경로가 붙은 모든 경로는 이 라우터가 관리함.
+router = APIRouter(prefix="/items", tags=["items"])
 
 
-@router.get(
-    "/", response_model=list[schemas.ItemResponse]
-)  # response_model을 지정함으로써 응답의 스키마를 강제하고
-def read_items(  # 클라이언트 측에는 필요한 정보만 넘기는 캡슐화의 일종
+@router.get("/", response_model=list[schemas.ItemResponse])
+def read_items(
     skip: int = 0, limit: int = 10, min_price: int = 0, db: Session = Depends(get_db)
 ):
     items = (
@@ -29,8 +24,8 @@ def read_items(  # 클라이언트 측에는 필요한 정보만 넘기는 캡�
 @router.get("/{item_id}", response_model=schemas.ItemResponse)
 def read_item(item_id: int, db: Session = Depends(get_db)):
     db_item = db.query(models.Item).filter(models.Item.id == item_id).first()
-    if db_item is None:  # Guard Clause 패턴
-        raise HTTPException(status_code=404, detail="아이템 정보가 없습니다.")
+    if db_item is None:
+        raise HTTPException(status_code=404, detail="item not found.")
     return db_item
 
 
@@ -42,8 +37,6 @@ def create_item(item: schemas.ItemCreate, db: Session = Depends(get_db)):
 
     db.commit()
 
-    db.refresh(
-        db_item
-    )  # 오토커밋과 오토플러시를 설정하지 않았기 때문에 수동으로 DB 반영 및 최신 객체를 받아오는 과정.
+    db.refresh(db_item)
 
     return db_item

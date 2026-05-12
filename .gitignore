@@ -176,4 +176,7 @@ pyrightconfig.json
 # Docker MySQL Volume
 mysql_data/
 
+# docs
+docs/
+
 # End of https://www.toptal.com/developers/gitignore/api/python

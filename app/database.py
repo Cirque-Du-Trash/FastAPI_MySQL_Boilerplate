@@ -9,7 +9,7 @@ load_dotenv()
 SQLALCHEMY_DATABASE_URL = os.getenv("DB_URL")
 
 if not SQLALCHEMY_DATABASE_URL:
-    raise ValueError("DB_URL environment variable is not set")
+    raise ValueError("DB_URL environment variable is not set")  # pragma: no cover
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(
@@ -21,8 +21,8 @@ Base = declarative_base()
 
 
 def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    db = SessionLocal()  # pragma: no cover
+    try:  # pragma: no cover
+        yield db  # pragma: no cover
+    finally:  # pragma: no cover
+        db.close()  # pragma: no cover

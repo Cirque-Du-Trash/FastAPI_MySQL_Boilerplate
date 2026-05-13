@@ -8,7 +8,29 @@ class ItemCreate(BaseModel):
 
 class ItemResponse(BaseModel):
     id: int
-    name: str = Field
+    name: str
     price: int = Field(ge=0)
+    owner_id: int
 
-    model_config = ConfigDict(from_attributes=True)
+    class Config:
+        from_attributes = True
+
+
+class UserCreate(BaseModel):
+    username: str = Field(min_length=6, max_length=25)
+    password: str = Field(min_length=6, max_length=25)
+
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    is_superuser: bool
+
+    class Config:
+        from_attributes = True
+
+
+class Token(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str

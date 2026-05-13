@@ -1,45 +1,61 @@
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+from sqlalchemy.orm import Session
+
 import models
 import schemas
 from database import get_db
-from fastapi import APIRouter, Depends, HTTPException, Path, Query
-from sqlalchemy.orm import Session
+from dependencies import get_current_user
 
 router = APIRouter(prefix="/items", tags=["items"])
 
 
+@router.post(
+    "/", response_model=schemas.ItemResponse, status_code=status.HTTP_201_CREATED
+)
+def create_item(
+    item: schemas.ItemCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    new_item = models.Item(**item.model_dump(), owner_id=current_user.id)
+    db.add(new_item)
+    db.commit()
+    db.refresh(new_item)
+    return new_item
+
+
 @router.get("/", response_model=list[schemas.ItemResponse])
 def read_items(
-    skip: int = Query(0, ge=0),
+    skip: int = Query(0, ge=0, le=100),
     limit: int = Query(10, ge=1, le=100),
-    min_price: int = Query(0, ge=0),
     db: Session = Depends(get_db),
 ):
-    items = (
-        db.query(models.Item)
-        .filter(models.Item.price >= min_price)
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
-    return items
+    return db.query(models.Item).offset(skip).limit(limit).all()
 
 
 @router.get("/{item_id}", response_model=schemas.ItemResponse)
-def read_item(item_id: int = Path(ge=1, le=2147483647), db: Session = Depends(get_db)):
-    db_item = db.query(models.Item).filter(models.Item.id == item_id).first()
-    if db_item is None:
-        raise HTTPException(status_code=404, detail="item not found.")
-    return db_item
+def read_item(
+    item_id: int = Path(ge=1, le=2147483647),
+    db: Session = Depends(get_db),
+):
+    item = db.query(models.Item).filter(models.Item.id == item_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return item
 
 
-@router.post("/", response_model=schemas.ItemResponse)
-def create_item(item: schemas.ItemCreate, db: Session = Depends(get_db)):
-    db_item = models.Item(name=item.name, price=item.price)
-
-    db.add(db_item)
-
+@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_item(
+    item_id: int = Path(ge=1, le=2147483647),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    item = db.query(models.Item).filter(models.Item.id == item_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    if item.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Not your item"
+        )
+    db.delete(item)
     db.commit()
-
-    db.refresh(db_item)
-
-    return db_item

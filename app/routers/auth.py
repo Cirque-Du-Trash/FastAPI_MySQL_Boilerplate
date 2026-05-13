@@ -1,11 +1,12 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 import models
 import schemas
+from core.limiter import limiter
 from core.security import (
     create_access_token,
     create_refresh_token,
@@ -19,8 +20,11 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/login", response_model=schemas.Token)
+@limiter.limit("5/minute")
 def login(
-    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
+    request: Request,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
 ):
     user = (
         db.query(models.User).filter(models.User.username == form_data.username).first()
@@ -37,7 +41,7 @@ def login(
     db_token = models.RefreshToken(
         user_id=user.id,
         token=refresh_token,
-        expires_at=datetime.now(timezone.utc)
+        expires_at=datetime.utcnow()
         + timedelta(days=settings.refresh_token_expire_days),
     )
     db.add(db_token)
@@ -61,7 +65,7 @@ def refresh(refresh_token: str, db: Session = Depends(get_db)):
         .first()
     )
 
-    if not db_token or db_token.expires_at < datetime.now(timezone.utc):
+    if not db_token or db_token.expires_at < datetime.utcnow():
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired refresh token",
@@ -75,7 +79,7 @@ def refresh(refresh_token: str, db: Session = Depends(get_db)):
     db_new_token = models.RefreshToken(
         user_id=db_token.user_id,
         token=new_refresh,
-        expires_at=datetime.now(timezone.utc)
+        expires_at=datetime.utcnow()
         + timedelta(days=settings.refresh_token_expire_days),
     )
     db.add(db_new_token)

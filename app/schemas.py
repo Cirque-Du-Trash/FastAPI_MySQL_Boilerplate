@@ -12,8 +12,7 @@ class ItemResponse(BaseModel):
     price: int = Field(ge=0)
     owner_id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserCreate(BaseModel):
@@ -26,8 +25,7 @@ class UserResponse(BaseModel):
     username: str
     is_superuser: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class Token(BaseModel):

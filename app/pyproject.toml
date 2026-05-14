@@ -20,6 +20,7 @@ dependencies = [
     "python-multipart (>=0.0.28,<0.0.29)",
     "slowapi (>=0.1.9,<0.2.0)",
     "pydantic-settings (>=2.14.1,<3.0.0)",
+    "bcrypt (==4.0.1)",
 ]
 
 
@@ -36,3 +37,11 @@ pytest-cov = "^7.1.0"
 pre-commit = "^4.6.0"
 alembic = "^1.18.4"
 
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning:passlib",
+    "ignore:datetime.datetime.utcnow:DeprecationWarning",
+]
+
+[tool.isort]
+profile = "black"

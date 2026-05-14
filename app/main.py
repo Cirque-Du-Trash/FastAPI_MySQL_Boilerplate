@@ -8,7 +8,7 @@ from core.limiter import limiter
 from database import engine
 from routers import auth, items, users
 
-# models.Base.metadata.create_all(bind=engine)
+# models.Base.metadata.create_all(bind=engine) # Use if not using alembic
 
 app = FastAPI()
 
@@ -18,7 +18,7 @@ app.add_middleware(SlowAPIMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # only local or test environments
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

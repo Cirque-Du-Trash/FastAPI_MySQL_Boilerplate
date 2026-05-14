@@ -33,6 +33,13 @@ def read_items(
     return db.query(models.Item).offset(skip).limit(limit).all()
 
 
+@router.get("/me", response_model=list[schemas.ItemResponse])
+def read_my_items(
+    db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)
+):
+    return db.query(models.Item).filter(models.Item.owner_id == current_user.id).all()
+
+
 @router.get("/{item_id}", response_model=schemas.ItemResponse)
 def read_item(
     item_id: int = Path(ge=1, le=2147483647),

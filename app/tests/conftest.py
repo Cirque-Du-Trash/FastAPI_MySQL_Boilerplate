@@ -21,6 +21,7 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_database():
+    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
     yield
@@ -43,3 +44,15 @@ app.dependency_overrides[get_db] = override_get_db
 def client():
     with TestClient(app) as c:
         yield c
+
+
+@pytest.fixture(scope="module")
+def auth_headers(client):
+    client.post(
+        "/users/register", json={"username": "testuser", "password": "testpass123"}
+    )
+    login_response = client.post(
+        "/auth/login", data={"username": "testuser", "password": "testpass123"}
+    )
+    token = login_response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
